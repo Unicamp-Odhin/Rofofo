@@ -1,0 +1,6 @@
+[submodule "modules/MFCC_Core"]
+	path = modules/MFCC_Core
+	url = https://github.com/Unicamp-Odhin/MFCC_Core
+[submodule "modules/I2S_Microphone"]
+	path = modules/I2S_Microphone
+	url = https://github.com/Unicamp-Odhin/I2S_Microphone
