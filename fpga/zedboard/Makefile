@@ -19,6 +19,6 @@ clean:
 	rm -rf reports
 
 load:
-	openFPGALoader -b nexys_a7_100 ./build/out.bit
+	openFPGALoader -b zedboard ./build/out.bit
 
 run_all: ./build/out.bit load

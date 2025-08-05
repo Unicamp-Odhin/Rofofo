@@ -4,3 +4,6 @@
 [submodule "modules/I2S_Microphone"]
 	path = modules/I2S_Microphone
 	url = https://github.com/Unicamp-Odhin/I2S_Microphone
+[submodule "modules/DRAM_Wrapper"]
+	path = modules/DRAM_Wrapper
+	url = https://github.com/Unicamp-Odhin/DRAM_Wrapper
