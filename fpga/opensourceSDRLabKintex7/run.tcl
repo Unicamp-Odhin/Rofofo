@@ -1,8 +1,6 @@
 read_verilog -sv main.sv
 read_verilog -sv ../../rtl/Rofofo.sv
 read_verilog -sv ../../modules/I2S_Microphone/rtl/i2s_capture.sv
-read_verilog -sv ../../modules/I2S_Microphone/rtl/i2s_fpga.sv
-read_verilog -sv ../../modules/I2S_Microphone/rtl/leds.sv
 read_verilog -sv ../../modules/I2S_Microphone/rtl/sample_reduce.sv
 read_verilog -sv ../../modules/I2S_Microphone/rtl/spi_slave.sv
 read_verilog -sv ../../modules/I2S_Microphone/rtl/i2s.sv

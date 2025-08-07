@@ -35,7 +35,7 @@ module Rofofo #(
     logic [7:0] spi_send_data;
 
     logic pcm_ready;
-    logic [I2S_DATA_OUT_SIZE - 1:0] pcm_out;
+    logic [15:0] pcm_out;
 
     logic mfcc_done, start_mfcc;
 
@@ -62,7 +62,7 @@ module Rofofo #(
         .mfcc_data_o  (coeficientes)
     );
 
-    always_ff @(posedge clk or negedge rst) begin
+    always_ff @(posedge clk or negedge rst_n) begin
         if(!rst_n) begin
             start_mfcc <= 0;
         end else begin
@@ -111,7 +111,7 @@ module Rofofo #(
     logic fifo_wr_en, fifo_rd_en;
     logic [7:0] fifo_read_data, fifo_write_data;
 
-    FIFO #(
+    fifo #(
         .DEPTH        (FIFO_DEPTH),
         .WIDTH        (FIFO_WIDTH)
     ) tx_fifo (
