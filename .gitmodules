@@ -7,3 +7,15 @@
 [submodule "modules/DRAM_Wrapper"]
 	path = modules/DRAM_Wrapper
 	url = https://github.com/Unicamp-Odhin/DRAM_Wrapper
+[submodule "modules/UART"]
+	path = modules/UART
+	url = https://github.com/Unicamp-Odhin/UART
+[submodule "modules/I2S_Speaker"]
+	path = modules/I2S_Speaker
+	url = https://github.com/Unicamp-Odhin/I2S_Speaker
+[submodule "modules/GPIO_Peripheral"]
+	path = modules/GPIO_Peripheral
+	url = https://github.com/Unicamp-Odhin/GPIO_Peripheral
+[submodule "modules/I2C-Master"]
+	path = modules/I2C-Master
+	url = https://github.com/Unicamp-Odhin/I2C-Master
