@@ -14,7 +14,7 @@ all: $(BISTREAM)
 
 $(BISTREAM): buildFolder
 	@echo "Building the project and Generate Bitstream..."
-	$(VIVADO) -mode batch -nolog -nojournal -source run.tcl
+	$(VIVADO) -mode batch -nolog -nojournal -source utils/run.tcl
 	if [ -n "$(BISTREAM)" ] && [ "$(BISTREAM)" != "./build/out.bit" ]; then mv ./build/out.bit "$(BISTREAM)"; fi
 	@echo "Bitstream generated at $(BISTREAM)"
 	

@@ -19,3 +19,6 @@
 [submodule "modules/I2C-Master"]
 	path = modules/I2C-Master
 	url = https://github.com/Unicamp-Odhin/I2C-Master
+[submodule "modules/thirdparty/VexiiRiscv"]
+	path = modules/thirdparty/VexiiRiscv
+	url = https://github.com/SpinalHDL/VexiiRiscv.git
