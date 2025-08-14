@@ -80,3 +80,5 @@ obj_dir
 slpp_all
 reports/
 fpga/opensourceSDRLabKintex7/clockInfo.txt
+fpga/opensourceSDRLabKintex7/ip/clk_wiz_0/doc/clk_wiz_v6_0_changelog.txt
+fpga/opensourceSDRLabKintex7/tight_setup_hold_pins.txt

@@ -26,7 +26,24 @@ module Rofofo #(
 
     output logic [SIZE_FULL_COUNT-1:0] full_count,
     output logic fifo_empty,
-    output logic fifo_full
+    output logic fifo_full,
+
+    // DRAM interface
+    inout  logic [31:0] ddram_dq,
+    inout  logic [3:0]  ddram_dqs_n,
+    inout  logic [3:0]  ddram_dqs_p,
+    output logic [14:0] ddram_a,
+    output logic [2:0]  ddram_ba,
+    output logic        ddram_ras_n,
+    output logic        ddram_cas_n,
+    output logic        ddram_we_n,
+    output logic        ddram_reset_n,
+    output logic [0:0]  ddram_clk_p,
+    output logic [0:0]  ddram_clk_n,
+    output logic [0:0]  ddram_cke,
+    output logic [0:0]  ddram_cs_n,
+    output logic [3:0]  ddram_dm,
+    output logic [0:0]  ddram_odt
 );
 
     logic [2:0] busy_sync;
@@ -229,5 +246,48 @@ module Rofofo #(
 
     assign busy_posedge = (busy_sync[2:1] == 2'b01) ? 1'b1 : 1'b0;
     assign i2s_lr       = 0; // Não usado, mas necessário para o I2S
+
+    logic [255: 0] write_data, read_data;
+    logic [24:0] real_addr;
+    logic [31:0] addr;
+    logic cyc, stb, we, ack;
+
+    Wrapper #(
+        .SYS_CLK_FREQ         (100_000_000),
+        .WORD_SIZE            (256),
+        .ADDR_WIDTH           (25),
+        .FIFO_DEPTH           (8)
+    ) u_Wrapper (
+        .sys_clk              (clk),                           // 1 bit
+        .rst_n                (rst_n),                         // 1 bit
+        .initialized          (initialized),                   // 1 bit
+
+        .cyc_i                (cyc),                           // 1 bit
+        .stb_i                (stb),                           // 1 bit
+        .we_i                 (we),                            // 1 bit
+        .addr_i               (addr),                          // 32 bits
+        .data_i               (write_data),                    // 256 bits
+        .data_o               (read_data),                     // 256 bits
+        .ack_o                (ack),                           // 1 bit
+
+        .ddram_dq             (ddram_dq),                      // 32 bits
+        .ddram_dqs_n          (ddram_dqs_n),                   // 4 bits
+        .ddram_dqs_p          (ddram_dqs_p),                   // 4
+        .ddram_a              (ddram_a),                       // 15 bits
+        .ddram_ba             (ddram_ba),                      // 3 bits
+        .ddram_cas_n          (ddram_cas_n),                   // 1 bit
+        .ddram_cke            (ddram_cke),                     // 1 bit
+        .ddram_clk_n          (ddram_clk_n),                   // 1 bit
+        .ddram_clk_p          (ddram_clk_p),                   // 1 bit
+        .ddram_cs_n           (ddram_cs_n),                    // 1 bit
+        .ddram_dm             (ddram_dm),                      // 4 bits
+        .ddram_odt            (ddram_odt),                     // 1 bit
+        .ddram_ras_n          (ddram_ras_n),                   // 1 bit
+        .ddram_reset_n        (ddram_reset_n),                 // 1 bit
+        .ddram_we_n           (ddram_we_n)                     // 1 bit
+    );
+
+    assign cyc = 0;
+    assign stb = 0;
 
 endmodule
