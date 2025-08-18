@@ -9,7 +9,8 @@ module Rofofo #(
     parameter int FIFO_WIDTH      = 8,
     parameter int CLK_FREQ        = 100_000_000,  // Frequência do clock do sistema
     parameter int SIZE_FULL_COUNT = 6,
-    parameter int I2S_CLK_FREQ    = 1_500_000
+    parameter int I2S_CLK_FREQ    = 1_500_000,
+    parameter int CACHE_SIZE      = 8192 * 2
 ) (
     input  logic clk,
     input  logic rst_n,
@@ -45,6 +46,7 @@ module Rofofo #(
     output logic [3:0]  ddram_dm,
     output logic [0:0]  ddram_odt
 );
+    localparam MEMORY_WORD_SIZE = 256;
 
     logic [2:0] busy_sync;
     logic data_in_valid, busy, data_out_valid, busy_posedge;
@@ -247,14 +249,15 @@ module Rofofo #(
     assign busy_posedge = (busy_sync[2:1] == 2'b01) ? 1'b1 : 1'b0;
     assign i2s_lr       = 0; // Não usado, mas necessário para o I2S
 
-    logic [255: 0] write_data, read_data;
-    logic [24:0] real_addr;
-    logic [31:0] addr;
-    logic cyc, stb, we, ack;
+    logic [MEMORY_WORD_SIZE - 1:0] memory_mosi, memory_miso;
+    logic [31:0] memory_addr;
+    logic memory_cyc, memory_stb, memory_we, memory_ack;
+
+    logic initialized;
 
     Wrapper #(
-        .SYS_CLK_FREQ         (100_000_000),
-        .WORD_SIZE            (256),
+        .SYS_CLK_FREQ         (CLK_FREQ),
+        .WORD_SIZE            (MEMORY_WORD_SIZE),
         .ADDR_WIDTH           (25),
         .FIFO_DEPTH           (8)
     ) u_Wrapper (
@@ -262,13 +265,13 @@ module Rofofo #(
         .rst_n                (rst_n),                         // 1 bit
         .initialized          (initialized),                   // 1 bit
 
-        .cyc_i                (cyc),                           // 1 bit
-        .stb_i                (stb),                           // 1 bit
-        .we_i                 (we),                            // 1 bit
-        .addr_i               (addr),                          // 32 bits
-        .data_i               (write_data),                    // 256 bits
-        .data_o               (read_data),                     // 256 bits
-        .ack_o                (ack),                           // 1 bit
+        .cyc_i                (memory_cyc),                    // 1 bit
+        .stb_i                (memory_stb),                    // 1 bit
+        .we_i                 (memory_we),                     // 1 bit
+        .addr_i               (memory_addr),                   // 32 bits
+        .data_i               (memory_mosi),                   // 256 bits
+        .data_o               (memory_miso),                   // 256 bits
+        .ack_o                (memory_ack),                    // 1 bit
 
         .ddram_dq             (ddram_dq),                      // 32 bits
         .ddram_dqs_n          (ddram_dqs_n),                   // 4 bits
@@ -287,7 +290,102 @@ module Rofofo #(
         .ddram_we_n           (ddram_we_n)                     // 1 bit
     );
 
-    assign cyc = 0;
-    assign stb = 0;
+    logic [MEMORY_WORD_SIZE - 1:0] wishbone_0_mosi, wishbone_0_miso;
+    logic [31:0] wishbone_0_addr, wishbone_0_sel;
+    logic wishbone_0_cyc, wishbone_0_stb, wishbone_0_we, wishbone_0_ack;
+
+    logic [MEMORY_WORD_SIZE - 1:0] wishbone_1_mosi, wishbone_1_miso;
+    logic [31:0] wishbone_1_addr, wishbone_1_sel;
+    logic wishbone_1_cyc, wishbone_1_stb, wishbone_1_we, wishbone_1_ack;
+
+    logic [MEMORY_WORD_SIZE - 1:0] wishbone_2_mosi, wishbone_2_miso;
+    logic [31:0] wishbone_2_addr, wishbone_2_sel;
+    logic wishbone_2_cyc, wishbone_2_stb, wishbone_2_we, wishbone_2_ack;
+
+    Cache #(
+        .WORD_SIZE            (MEMORY_WORD_SIZE),
+        .CACHE_SIZE           (8192)
+    ) u_Cache (
+        .clk                  (clk),                           // 1 bit
+        .rst_n                (rst_n),                         // 1 bit
+
+        .wishbone_0_cyc_i     (wishbone_0_cyc),              // 1 bit
+        .wishbone_0_stb_i     (wishbone_0_stb),              // 1 bit
+        .wishbone_0_we_i      (wishbone_0_we),               // 1 bit
+        .wishbone_0_ack_o     (wishbone_0_ack),              // 1 bit
+        .wishbone_0_addr_i    (wishbone_0_addr),             // 32 bits
+        .wishbone_0_mosi_i    (wishbone_0_mosi),             // 256 bits
+        .wishbone_0_miso_o    (wishbone_0_miso),             // 256 bits
+
+        .wishbone_1_cyc_i     (wishbone_1_cyc),              // 1 bit
+        .wishbone_1_stb_i     (wishbone_1_stb),              // 1 bit
+        .wishbone_1_we_i      (wishbone_1_we),               // 1 bit
+        .wishbone_1_ack_o     (wishbone_1_ack),              // 1 bit
+        .wishbone_1_addr_i    (wishbone_1_addr),             // 32 bits
+        .wishbone_1_mosi_i    (wishbone_1_mosi),             // 256 bits
+        .wishbone_1_miso_o    (wishbone_1_miso),             // 256 bits
+
+        .wishbone_2_cyc_i     (wishbone_2_cyc),              // 1 bit
+        .wishbone_2_stb_i     (wishbone_2_stb),              // 1 bit
+        .wishbone_2_we_i      (wishbone_2_we),               // 1 bit
+        .wishbone_2_ack_o     (wishbone_2_ack),              // 1 bit
+        .wishbone_2_addr_i    (wishbone_2_addr),             // 32 bits
+        .wishbone_2_mosi_i    (wishbone_2_mosi),             // 256 bits
+        .wishbone_2_miso_o    (wishbone_2_miso),             // 256 bits
+
+        .memory_cyc_o         (memory_cyc),                  // 1 bit
+        .memory_stb_o         (memory_stb),                  // 1 bit
+        .memory_we_o          (memory_we),                   // 1 bit
+        .memory_ack_i         (memory_ack),                  // 1 bit
+        .memory_addr_o        (memory_addr),                 // 32 bits
+        .memory_mosi_o        (memory_mosi),                 // 256 bits
+        .memory_miso_i        (memory_miso)                  // 256 bits
+    );
+
+    VexiiRiscv u_VexiiRiscv (
+        .clk                                                   (clk),    // 1 bit
+        .reset                                                 (~rst_n)  // 1 bit
+
+        .PrivilegedPlugin_logic_rdtime                         (0), // 64 bits
+        .PrivilegedPlugin_logic_harts_0_int_m_timer            (0), // 1 bit
+        .PrivilegedPlugin_logic_harts_0_int_m_software         (0), // 1 bit
+        .PrivilegedPlugin_logic_harts_0_int_m_external         (0), // 1 bit
+        
+        .LsuL1WishbonePlugin_logic_bus_CYC                     (wishbone_1_cyc),  // 1 bit
+        .LsuL1WishbonePlugin_logic_bus_STB                     (wishbone_1_stb),  // 1 bit
+        .LsuL1WishbonePlugin_logic_bus_ACK                     (wishbone_1_ack),  // 1 bit
+        .LsuL1WishbonePlugin_logic_bus_WE                      (wishbone_1_we),   // 1 bit
+        .LsuL1WishbonePlugin_logic_bus_ADR                     (wishbone_1_addr), // 25 bits
+        .LsuL1WishbonePlugin_logic_bus_DAT_MISO                (wishbone_1_miso), // 256 bits
+        .LsuL1WishbonePlugin_logic_bus_DAT_MOSI                (wishbone_1_mosi), // 256 bits
+        .LsuL1WishbonePlugin_logic_bus_SEL                     (wishbone_1_sel),  // 32 bits
+        .LsuL1WishbonePlugin_logic_bus_ERR                     (0), // 1 bit
+        .LsuL1WishbonePlugin_logic_bus_CTI                     (),  // 3 bits
+        .LsuL1WishbonePlugin_logic_bus_BTE                     (),  // 2 bits
+
+        .FetchL1WishbonePlugin_logic_bus_CYC                   (wishbone_0_cyc),  // 1 bit
+        .FetchL1WishbonePlugin_logic_bus_STB                   (wishbone_0_stb),  // 1 bit
+        .FetchL1WishbonePlugin_logic_bus_ACK                   (wishbone_0_ack),  // 1 bit
+        .FetchL1WishbonePlugin_logic_bus_WE                    (wishbone_0_we),   // 1 bit
+        .FetchL1WishbonePlugin_logic_bus_ADR                   (wishbone_0_addr), // 25 bits
+        .FetchL1WishbonePlugin_logic_bus_DAT_MISO              (wishbone_0_miso), // 256 bits
+        .FetchL1WishbonePlugin_logic_bus_DAT_MOSI              (wishbone_0_mosi), // 256 bits
+        .FetchL1WishbonePlugin_logic_bus_SEL                   (wishbone_0_sel),  // 32 bits
+        .FetchL1WishbonePlugin_logic_bus_ERR                   (0), // 1 bit
+        .FetchL1WishbonePlugin_logic_bus_CTI                   (), // 3 bits
+        .FetchL1WishbonePlugin_logic_bus_BTE                   (), // 2 bits
+
+        .LsuCachelessWishbonePlugin_logic_bridge_down_CYC      (), // 1 bit
+        .LsuCachelessWishbonePlugin_logic_bridge_down_STB      (), // 1 bit
+        .LsuCachelessWishbonePlugin_logic_bridge_down_ACK      (0), // 1 bit
+        .LsuCachelessWishbonePlugin_logic_bridge_down_WE       (), // 1 bit
+        .LsuCachelessWishbonePlugin_logic_bridge_down_ADR      (), // 29 bits
+        .LsuCachelessWishbonePlugin_logic_bridge_down_DAT_MISO (0), // 64 bits
+        .LsuCachelessWishbonePlugin_logic_bridge_down_DAT_MOSI (), // 64 bits
+        .LsuCachelessWishbonePlugin_logic_bridge_down_SEL      (), // 8 bits
+        .LsuCachelessWishbonePlugin_logic_bridge_down_ERR      (0), // 1 bit
+        .LsuCachelessWishbonePlugin_logic_bridge_down_CTI      (), // 3 bits
+        .LsuCachelessWishbonePlugin_logic_bridge_down_BTE      ()  // 2 bits
+    );
 
 endmodule
