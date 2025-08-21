@@ -302,10 +302,10 @@ module Rofofo #(
     logic [31:0] wishbone_2_addr, wishbone_2_sel;
     logic wishbone_2_cyc, wishbone_2_stb, wishbone_2_we, wishbone_2_ack;
 
-    Cache #(
+    Request_Arbitrer #(
         .WORD_SIZE            (MEMORY_WORD_SIZE),
         .CACHE_SIZE           (8192)
-    ) u_Cache (
+    ) u_Request_Arbitrer (
         .clk                  (clk),                           // 1 bit
         .rst_n                (rst_n),                         // 1 bit
 
